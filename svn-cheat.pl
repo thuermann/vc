@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 #
-# $Id: svn-cheat.pl,v 1.1 2009/09/18 08:52:34 urs Exp $
+# $Id: svn-cheat.pl,v 1.2 2010/05/11 07:46:30 urs Exp $
 
 use Digest::MD5 qw(md5_hex);
+use Digest::SHA qw(sha1_hex);
 
 while ($#ARGV >= 3 && ($ARGV[0] eq "-x" || $ARGV[0] eq "-r")) {
     ($opt, $rev, $path, $file) = (shift, shift, shift, shift);
@@ -60,6 +61,8 @@ sub rev {
 	undef $p;
 	undef $t;
 
+	undef $text_md5, $text_sha1;
+
 	$h = header();
 	die "wrong length header" if ($cont_len != $prop_len + $text_len);
 
@@ -71,9 +74,13 @@ sub rev {
 	if ($text_len > 0) {
 	    printf "skip text:      %5d\n", $text_len;
 	    $t = text($text_len);
-	    if (md5_hex($t) ne $text_md5) {
+	    if (defined($text_md5) && md5_hex($t) ne $text_md5) {
 		print "$t";
 		die "md5 error";
+	    }
+	    if (defined($text_sha1) && sha1_hex($t) ne $text_sha1) {
+		print "$t";
+		die "sha1 error";
 	    }
 	    if (defined($extract{"$rev:$node_path"})) {
 		my $file = $extract{"$rev:$node_path"};
@@ -86,11 +93,13 @@ sub rev {
 		open TIN, $file;
 		$t = join('', <TIN>);
 		close TIN;
-		$text_len = length($t);
-		$text_md5 = md5_hex($t);
-		$cont_len = $prop_len + $text_len;
+		$text_len  = length($t);
+		$text_md5  = md5_hex($t);
+		$text_sha1 = sha1_hex($t);
+		$cont_len  = $prop_len + $text_len;
 		$h =~ s/(Text-content-length): \d+/$1: $text_len/g;
 		$h =~ s/(Text-content-md5): .{32}/$1: $text_md5/g;
+		$h =~ s/(Text-content-sha1): .{40}/$1: $text_sha1/g;
 		$h =~ s/(Content-length): \d+/$1: $cont_len/g;
 	    }
 	}
@@ -130,6 +139,8 @@ sub header {
 	    $text_len  = $1;
 	} elsif (/^Text-content-md5: (.{32})$/) {
 	    $text_md5  = $1;
+	} elsif (/^Text-content-sha1: (.{40})$/) {
+	    $text_sha1  = $1;
 	} elsif (/^Content-length: (\d+)$/) {
 	    $cont_len  = $1;
 	} elsif (/^Node-path: (.*)$/) {
@@ -143,6 +154,8 @@ sub header {
 	} elsif (/^Node-copyfrom-path: (.*)$/) {
 	    ;
 	} elsif (/^Text-copy-source-md5: (.{32})$/) {
+	    ;
+	} elsif (/^Text-copy-source-sha1: (.{40})$/) {
 	    ;
 	} else {
 	    print "unknown header line: $_\n";
