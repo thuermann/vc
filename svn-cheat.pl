@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: svn-cheat.pl,v 1.3 2010/05/11 08:01:55 urs Exp $
+# $Id: svn-cheat.pl,v 1.4 2010/05/11 09:46:03 urs Exp $
 
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA qw(sha1_hex);
@@ -108,15 +108,15 @@ sub rev {
 	print OUT $p;
 	print OUT $t;
 
-	if ($cont_len > 0) {
-	    die "end of node" unless ($_ eq "\n");
+	$expect_nl = $cont_len > 0 ? 2 : 1;
+	while ($_ eq "\n") {
 	    print OUT;
+	    $expect_nl--;
 	    $_ = $lines[++$i];
 	}
-
-	die "end of node" unless ($_ eq "\n");
-	print OUT;
-	$_ = $lines[++$i];
+	if ($expect_nl != 0) {
+	    print "WARNING: Unexpected number of newlines\n";
+	}
     }
 }
 
