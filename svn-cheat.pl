@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: svn-cheat.pl,v 1.2 2010/05/11 07:46:30 urs Exp $
+# $Id: svn-cheat.pl,v 1.3 2010/05/11 08:01:55 urs Exp $
 
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA qw(sha1_hex);
@@ -204,12 +204,14 @@ sub text {
     my ($len) = @_;
     my ($text);
 
-    while ($len > 0) {
+    while (length($_) <= $len) {
 	$text .= $_;
 	$len -= length($_);
 	$_ = $lines[++$i];
     }
-    die "length mismatch" if ($len != 0);
+    if ($len > 0) {
+	$text .= substr($_, 0, $len, "");
+    }
 
     return $text;
 }
