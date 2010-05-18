@@ -1,16 +1,25 @@
 #!/usr/bin/perl
 #
-# $Id: svn-cheat.pl,v 1.5 2010/05/18 06:48:42 urs Exp $
+# $Id: svn-cheat.pl,v 1.6 2010/05/18 21:40:44 urs Exp $
 
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA qw(sha1_hex);
 
-while ($#ARGV >= 3 && ($ARGV[0] eq "-x" || $ARGV[0] eq "-r")) {
-    ($opt, $rev, $path, $file) = (shift, shift, shift, shift);
-    if ($opt eq "-x") {
+while ($#ARGV >= 1) {
+    if ($ARGV[0] eq "-x" && $#ARGV >= 3) {
+	($opt, $rev, $path, $file) = (shift, shift, shift, shift);
 	$extract{"$rev:$path"} = $file;
-    } else {
+    } elsif ($ARGV[0] eq "-r" && $#ARGV >= 3) {
+	($opt, $rev, $path, $file) = (shift, shift, shift, shift);
 	$replace{"$rev:$path"} = $file;
+    } elsif ($ARGV[0] eq "-a" && $#ARGV >= 3) {
+	($opt, $rev, $path, $file) = (shift, shift, shift, shift);
+	$add{"$rev:$path"} = $file;
+    } elsif ($ARGV[0] eq "-d" && $#ARGV >= 2) {
+	($opt, $rev, $path) = (shift, shift, shift);
+	$delete{"$rev:$path"} = 1;
+    } else {
+	last;
     }
 }
 
@@ -20,6 +29,14 @@ for $k (keys %extract) {
 
 for $k (keys %replace) {
     print "replace: $k $replace{$k}\n";
+}
+
+for $k (keys %add) {
+    print "add:     $k $add{$k}\n";
+}
+
+for $k (keys %delete) {
+    print "delete:  $k\n";
 }
 
 open OUT, ">out.dump";
@@ -115,7 +132,24 @@ sub rev {
 	    print "WARNING: Unexpected number of newlines\n";
 	}
 
-	print OUT $h, $p, $t, $b;
+	for (keys(%add)) {
+	    ($arev, $apath) = split(/:/);
+	    if ($arev == $rev && $apath lt $node_path) {
+		print_node($apath, $add{$_});
+		delete $add{$_};
+	    }
+	}
+	if (!defined($delete{"$rev:$node_path"})) {
+	    print OUT $h, $p, $t, $b;
+	}
+    }
+
+    for (keys(%add)) {
+	($arev, $apath) = split(/:/);
+	if ($arev == $rev) {
+	    print_node($apath, $add{$_});
+	    delete $add{$_};
+	}
     }
 }
 
@@ -213,4 +247,30 @@ sub text {
     }
 
     return $text;
+}
+
+sub print_node {
+    my ($path, $file) = @_;
+    my ($h, $p, $t, $b);
+    my ($text_len, $text_md5);
+
+    open TIN, $file;
+    $t = join('', <TIN>);
+    close TIN;
+
+    $text_len = length($t);
+    $text_md5 = md5_hex($t);
+
+    $h =  "Node-path: $path\n";
+    $h .= "Node-kind: file\n";
+    $h .= "Node-action: change\n";
+    $h .= "Text-content-length: $text_len\n";
+    $h .= "Text-content-md5: $text_md5\n";
+    $h .= "Content-length: $text_len\n";
+    $h .= "\n";
+
+    $p = "";
+    $b = "\n\n";
+
+    print OUT $h, $p, $t, $b;
 }
