@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: svn-cheat.pl,v 1.4 2010/05/11 09:46:03 urs Exp $
+# $Id: svn-cheat.pl,v 1.5 2010/05/18 06:48:42 urs Exp $
 
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA qw(sha1_hex);
@@ -60,8 +60,9 @@ sub rev {
 	undef $h;
 	undef $p;
 	undef $t;
-
-	undef $text_md5, $text_sha1;
+	undef $b;
+	undef $text_md5;
+	undef $text_sha1;
 
 	$h = header();
 	die "wrong length header" if ($cont_len != $prop_len + $text_len);
@@ -104,19 +105,17 @@ sub rev {
 	    }
 	}
 
-	print OUT $h;
-	print OUT $p;
-	print OUT $t;
-
 	$expect_nl = $cont_len > 0 ? 2 : 1;
 	while ($_ eq "\n") {
-	    print OUT;
+	    $b .= $_;
 	    $expect_nl--;
 	    $_ = $lines[++$i];
 	}
 	if ($expect_nl != 0) {
 	    print "WARNING: Unexpected number of newlines\n";
 	}
+
+	print OUT $h, $p, $t, $b;
     }
 }
 
