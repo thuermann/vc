@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: rcs-touch.pl,v 1.1 2008/05/18 16:42:39 urs Exp $
+# $Id: rcs-touch.pl,v 1.2 2011/10/19 21:10:19 urs Exp $
 #
 # Change check-in time of RCS and CVS files.
 
@@ -10,12 +10,18 @@ if (!Getopts("r:d:") || $#ARGV == -1) {
     die "Usage: $0 [-r rev] [-d date] RCS-files...\n";
 }
 
-if (defined($opt_d)) {
-    $new_date = `date -u +%Y.%m.%d.%H.%M.%S -d "$opt_d"`;
+$date_opt = "-d \"$opt_d\"" if (defined($opt_d));
+
+if (`date +%Y $date_opt` < 2000) {
+    $date_fmt = "+%y.%m.%d.%H.%M.%S";
 } else {
-    $new_date = `date -u +%Y.%m.%d.%H.%M.%S`;
+    $date_fmt = "+%Y.%m.%d.%H.%M.%S";
 }
+
+$new_date = `date -u $date_fmt $date_opt`;
 chop($new_date);
+
+print "$new_date\n";
 
 $re_date = '(\d\d)?\d\d\.\d\d\.\d\d\.\d\d\.\d\d\.\d\d';
 
