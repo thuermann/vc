@@ -1,9 +1,14 @@
 #!/usr/bin/perl
 #
-# $Id: cvs-co-all.pl,v 1.1 2009/11/17 22:47:03 urs Exp $
+# $Id: cvs-co-all.pl,v 1.2 2013/08/15 22:17:05 urs Exp $
 
 $root = $ENV{CVSROOT};
 $rep  = shift;
+
+system("mkdir -p $rep");
+chdir $rep;
+
+$tmpdir = "co";
 
 @files = split(' ', `cd $root; find $rep -name \\*,v | sort`);
 for $f (@files) {
@@ -49,16 +54,17 @@ for $f (@files) {
 		system("touch revs-kk/$f-$rev");
 		system("touch revs-ko/$f-$rev");
 	    } else {
-		system("rm -rf $rep");
-		system("cvs co -r $rev $rep/$f");
-		system("mv $rep/$f revs/$f-$rev");
-		system("rm -rf $rep");
-		system("cvs co -kk -r $rev $rep/$f");
-		system("mv $rep/$f revs-kk/$f-$rev");
-		system("rm -rf $rep");
-		system("cvs co -ko -r $rev $rep/$f");
-		system("mv $rep/$f revs-ko/$f-$rev");
-		system("rm -rf $rep");
+		chop($b = `basename $f`);
+		system("rm -rf $tmpdir");
+		system("cvs co -d $tmpdir -r $rev $rep/$f");
+		system("mv $tmpdir/$b revs/$f-$rev");
+		system("rm -rf $tmpdir");
+		system("cvs co -d $tmpdir -kk -r $rev $rep/$f");
+		system("mv $tmpdir/$b revs-kk/$f-$rev");
+		system("rm -rf $tmpdir");
+		system("cvs co -d $tmpdir -ko -r $rev $rep/$f");
+		system("mv $tmpdir/$b revs-ko/$f-$rev");
+		system("rm -rf $tmpdir");
 	    }
 	    open OUT, ">ts/$f-$rev" || die;
 	    print OUT "$date\n";
