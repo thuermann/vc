@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: cvs-co-all.pl,v 1.2 2013/08/15 22:17:05 urs Exp $
+# $Id: cvs-co-all.pl,v 1.3 2017/07/04 05:42:31 urs Exp $
 
 $root = $ENV{CVSROOT};
 $rep  = shift;
@@ -17,7 +17,7 @@ for $f (@files) {
     $f =~ s/\/Attic//;
     @log = `cvs rlog $f`;
 
-    $f =~ s/^$rep\///;
+    $f =~ s/^\Q$rep\E\///;
 
     system("mkdir -p \$(dirname revs/$f)");
     system("mkdir -p \$(dirname revs-kk/$f)");
