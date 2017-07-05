@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: rcs-touch.pl,v 1.4 2017/02/20 15:58:20 urs Exp $
+# $Id: rcs-touch.pl,v 1.5 2017/07/05 09:17:23 urs Exp $
 #
 # Change check-in time of RCS and CVS files.
 
@@ -53,15 +53,16 @@ sub rcs_touch {
 	next unless ($lines[$i-1] =~ /^($re_rev)$/);
 	next unless (!defined($opt_r) || $lines[$i-1] eq "$opt_r\n");
 	if ($lines[$i] =~ s/(^date\s+)($re_date);/$1$new_date;/) {
-	    print "$file: $i: $2 -> $new_date\n";
 	    $rev = $lines[$i-1];
 	    chop($rev);
+	    print "$file: $i: rev $rev: $2 -> $new_date\n";
 	    last
 	}
     }
     for $i (1..$#lines) {
 	if ($lines[$i] =~ /$re_id/) {
-	    if ($1 == $rev) {
+	    print "found Id for rev $1\n";
+	    if ($1 eq $rev) {
 		$old_id = $3;
 		$lines[$i] =~ s/$old_id/$new_id/;
 		print "$file: $i: $old_id -> $new_id\n";
