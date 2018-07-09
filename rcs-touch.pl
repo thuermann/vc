@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 #
-# $Id: rcs-touch.pl,v 1.5 2017/07/05 09:17:23 urs Exp $
+# $Id: rcs-touch.pl,v 1.6 2018/07/09 00:51:48 urs Exp $
 #
 # Change check-in time of RCS and CVS files.
 
-require "getopts.pl";
+use Getopt::Std;
 
-if (!Getopts("r:d:") || $#ARGV == -1) {
+if (!getopts("r:d:") || $#ARGV == -1) {
     die "Usage: $0 [-r rev] [-d date] RCS-files...\n";
 }
 
