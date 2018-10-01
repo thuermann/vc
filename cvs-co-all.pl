@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: cvs-co-all.pl,v 1.4 2018/04/17 20:19:46 urs Exp $
+# $Id: cvs-co-all.pl,v 1.5 2018/10/01 17:49:48 urs Exp $
 
 $root = $ENV{CVSROOT};
 $rep  = shift;
@@ -45,8 +45,7 @@ for $f (@files) {
 	    $rev = $1;
 	} elsif (/^date: (\d\d\d\d[-\/]\d\d[-\/]\d\d \d\d:\d\d:\d\d)/) {
 	    $date = $1;
-	    $date =~ s/[-\/: ]/./g;
-	    $date =~ s/^19// if ($date =~ /^19\d\d/);
+	    $date =~ tr/\/ /-T/;
 	    if (/state: dead;/) {
 		system("touch revs/$f-$rev");
 		system("touch revs-kk/$f-$rev");
